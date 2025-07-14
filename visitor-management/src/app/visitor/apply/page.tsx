@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, FormEvent, ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -15,6 +14,7 @@ interface FormData {
   purpose: string
   companion: string
   privacyAgree: boolean
+  attachments: string[] // 파일명 배열 추가
 }
 
 export default function VisitorApply() {
@@ -28,41 +28,24 @@ export default function VisitorApply() {
     visitTime: '',
     purpose: '',
     companion: '',
-    privacyAgree: false
+    privacyAgree: false,
+    attachments: []
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    emailjs.send(
-      'service_3gzs7qh',      // 복사한 Service ID
-      'template_qzs5r1e',     // 복사한 Template ID
-      {
-        name: formData.name,
-        company: formData.company,
-        phone: formData.phone,
-        email: formData.email,
-        visitDate: formData.visitDate,
-        visitTime: formData.visitTime,
-        purpose: formData.purpose,
-        companion: formData.companion,
-        // 템플릿에 맞는 변수명 추가
-      },
-      ' u-wjR1QxMm89__PbF'       // 복사한 Public Key
-    ).then(
-      (result) => {
-        console.log('이메일 전송 성공:', result.text);
-      },
-      (error) => {
-        console.error('이메일 전송 실패:', error.text);
-      }
-    );
     // LocalStorage에서 기존 데이터 가져오기
     const existingData = JSON.parse(localStorage.getItem('visitorApplications') || '[]')
     
+    // 파일명 배열 저장
+    const attachmentNames = selectedFiles ? Array.from(selectedFiles).map(f => f.name) : []
+
     // 새로운 신청 추가
     const newApplication = {
       ...formData,
+      attachments: attachmentNames,
       id: Date.now(),
       status: '대기중',
       submitDate: new Date().toISOString()
@@ -89,6 +72,11 @@ export default function VisitorApply() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+  }
+
+  // 파일 첨부 핸들러
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSelectedFiles(e.target.files)
   }
 
   if (isSubmitted) {
@@ -194,7 +182,7 @@ export default function VisitorApply() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="visitDate" className="block text-sm font-medium text-gray-700">
-                    방문 일자 *
+                    방문 예정일자 *
                   </label>
                   <input
                     type="date"
@@ -209,7 +197,7 @@ export default function VisitorApply() {
 
                 <div>
                   <label htmlFor="visitTime" className="block text-sm font-medium text-gray-700">
-                    방문 시간 *
+                    방문 예정시간 *
                   </label>
                   <select
                     name="visitTime"
@@ -274,6 +262,35 @@ export default function VisitorApply() {
                 />
               </div>
 
+              {/* 파일 첨부 */}
+              <div className="mt-4">
+                <label htmlFor="attachment" className="block text-sm font-medium text-gray-700">
+                  파일 첨부 (여러 개 선택 가능)
+                </label>
+                <input
+                  type="file"
+                  name="attachment"
+                  id="attachment"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.hwp,.doc,.docx"
+                  onChange={handleFileChange}
+                  className="mt-1 block w-full"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  첨부 가능: PDF, JPG, PNG, 한글, 워드 파일 등
+                </p>
+                {selectedFiles && selectedFiles.length > 0 && (
+                  <ul className="text-xs text-gray-500 mt-1 list-disc list-inside">
+                    {Array.from(selectedFiles).map((file, idx) => (
+                      <li key={idx}>{file.name}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* 개인정보 동의 */}
+            <div className="flex items-start">
               <div className="flex items-center h-5">
                 <input
                   type="checkbox"
