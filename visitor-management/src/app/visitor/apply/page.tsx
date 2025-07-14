@@ -1,8 +1,9 @@
 'use client'
-
+import emailjs from 'emailjs-com';  
 import { useState, FormEvent, ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+ 
 
 interface FormData {
   name: string
@@ -35,8 +36,30 @@ export default function VisitorApply() {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+    emailjs.send(
+      'service_3gzs7qh',      // 복사한 Service ID
+      'template_qzs5r1e',     // 복사한 Template ID
+      {
+        name: formData.name,
+        company: formData.company,
+        phone: formData.phone,
+        email: formData.email,
+        visitDate: formData.visitDate,
+        visitTime: formData.visitTime,
+        purpose: formData.purpose,
+        companion: formData.companion,
+        // 템플릿에 맞는 변수명 추가
+      },
+      ' u-wjR1QxMm89__PbF'       // 복사한 Public Key
+    ).then(
+      (result) => {
+        console.log('이메일 전송 성공:', result.text);
+      },
+      (error) => {
+        console.error('이메일 전송 실패:', error.text);
+      }
+    );
     // LocalStorage에서 기존 데이터 가져오기
     const existingData = JSON.parse(localStorage.getItem('visitorApplications') || '[]')
     
@@ -64,7 +87,9 @@ export default function VisitorApply() {
     }, 3000)
   }
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
     setFormData(prev => ({
@@ -198,15 +223,35 @@ export default function VisitorApply() {
                   <label htmlFor="visitTime" className="block text-sm font-medium text-gray-700">
                     방문 예정시간 *
                   </label>
-                  <input
-                    type="time"
+                  <select
                     name="visitTime"
                     id="visitTime"
                     required
                     value={formData.visitTime}
                     onChange={handleChange}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value="">시간 선택</option>
+                    <option value="09:00">09:00</option>
+                    <option value="09:30">09:30</option>
+                    <option value="10:00">10:00</option>
+                    <option value="10:30">10:30</option>
+                    <option value="11:00">11:00</option>
+                    <option value="11:30">11:30</option>
+                    <option value="12:00">12:00</option>
+                    <option value="12:30">12:30</option>
+                    <option value="13:00">13:00</option>
+                    <option value="13:30">13:30</option>
+                    <option value="14:00">14:00</option>
+                    <option value="14:30">14:30</option>
+                    <option value="15:00">15:00</option>
+                    <option value="15:30">15:30</option>
+                    <option value="16:00">16:00</option>
+                    <option value="16:30">16:30</option>
+                    <option value="17:00">17:00</option>
+                    <option value="17:30">17:30</option>
+                    <option value="18:00">18:00</option>
+                  </select>
                 </div>
               </div>
 
@@ -251,9 +296,13 @@ export default function VisitorApply() {
                   name="attachment"
                   id="attachment"
                   multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.hwp,.doc,.docx"
                   onChange={handleFileChange}
                   className="mt-1 block w-full"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  첨부 가능: PDF, JPG, PNG, 한글, 워드 파일 등
+                </p>
                 {selectedFiles && selectedFiles.length > 0 && (
                   <ul className="text-xs text-gray-500 mt-1 list-disc list-inside">
                     {Array.from(selectedFiles).map((file, idx) => (
