@@ -16,12 +16,15 @@ interface VisitorApplication {
   companion: string
   status: '대기중' | '승인' | '거절'
   submitDate: string
+  attachments: string[] // 첨부파일 필드 추가
 }
 
 export default function AdminDashboard() {
   const router = useRouter()
   const [applications, setApplications] = useState<VisitorApplication[]>([])
   const [filter, setFilter] = useState<'all' | '대기중' | '승인' | '거절'>('all')
+  const [dateFilter, setDateFilter] = useState('') // 날짜 필터 추가
+  const [selectedFile, setSelectedFile] = useState<string | null>(null) // 선택된 첨부파일
 
   useEffect(() => {
     // 로그인 상태 확인
@@ -51,9 +54,12 @@ export default function AdminDashboard() {
     localStorage.setItem('visitorApplications', JSON.stringify(updatedApplications))
   }
 
-  const filteredApplications = applications.filter(app => 
-    filter === 'all' ? true : app.status === filter
-  )
+  // 날짜 필터링 적용
+  const filteredApplications = applications.filter(app => {
+    const statusMatch = filter === 'all' ? true : app.status === filter
+    const dateMatch = dateFilter ? app.visitDate === dateFilter : true
+    return statusMatch && dateMatch
+  })
 
   const stats = {
     total: applications.length,
@@ -68,6 +74,12 @@ export default function AdminDashboard() {
 
   const formatTime = (timeString: string) => {
     return timeString
+  }
+
+  // 첨부파일 다운로드 함수 (실제로는 서버에서 파일을 가져와야 함)
+  const handleFileDownload = (fileName: string) => {
+    // 실제 구현에서는 서버에서 파일을 가져와야 합니다
+    alert(`파일 다운로드: ${fileName}\n실제 구현에서는 서버에서 파일을 가져와야 합니다.`)
   }
 
   return (
@@ -158,47 +170,71 @@ export default function AdminDashboard() {
         {/* 필터 */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-md ${
-                  filter === 'all' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                전체 ({stats.total})
-              </button>
-              <button
-                onClick={() => setFilter('대기중')}
-                className={`px-4 py-2 rounded-md ${
-                  filter === '대기중' 
-                    ? 'bg-yellow-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                대기중 ({stats.pending})
-              </button>
-              <button
-                onClick={() => setFilter('승인')}
-                className={`px-4 py-2 rounded-md ${
-                  filter === '승인' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                승인 ({stats.approved})
-              </button>
-              <button
-                onClick={() => setFilter('거절')}
-                className={`px-4 py-2 rounded-md ${
-                  filter === '거절' 
-                    ? 'bg-red-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                거절 ({stats.rejected})
-              </button>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-md ${
+                    filter === 'all' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  전체 ({stats.total})
+                </button>
+                <button
+                  onClick={() => setFilter('대기중')}
+                  className={`px-4 py-2 rounded-md ${
+                    filter === '대기중' 
+                      ? 'bg-yellow-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  대기중 ({stats.pending})
+                </button>
+                <button
+                  onClick={() => setFilter('승인')}
+                  className={`px-4 py-2 rounded-md ${
+                    filter === '승인' 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  승인 ({stats.approved})
+                </button>
+                <button
+                  onClick={() => setFilter('거절')}
+                  className={`px-4 py-2 rounded-md ${
+                    filter === '거절' 
+                      ? 'bg-red-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  거절 ({stats.rejected})
+                </button>
+              </div>
+              
+              {/* 날짜 필터 추가 */}
+              <div className="flex items-center space-x-2">
+                <label htmlFor="dateFilter" className="text-sm font-medium text-gray-700">
+                  방문일자:
+                </label>
+                <input
+                  type="date"
+                  id="dateFilter"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+                {dateFilter && (
+                  <button
+                    onClick={() => setDateFilter('')}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    초기화
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -223,6 +259,9 @@ export default function AdminDashboard() {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       방문 정보
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      첨부파일
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       신청일
@@ -253,6 +292,25 @@ export default function AdminDashboard() {
                           <div className="text-sm text-gray-500">{application.purpose}</div>
                           {application.companion && (
                             <div className="text-sm text-gray-500">동반: {application.companion}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          {application.attachments && application.attachments.length > 0 ? (
+                            <div className="space-y-1">
+                              {application.attachments.map((fileName, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleFileDownload(fileName)}
+                                  className="block text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                >
+                                  📎 {fileName}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">첨부파일 없음</span>
                           )}
                         </div>
                       </td>
