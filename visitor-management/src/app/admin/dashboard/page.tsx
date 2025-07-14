@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [applications, setApplications] = useState<VisitorApplication[]>([])
   const [filter, setFilter] = useState<'all' | '대기중' | '승인' | '거절'>('all')
   const [dateFilter, setDateFilter] = useState('') // 날짜 필터 추가
-  const [selectedFile, setSelectedFile] = useState<string | null>(null) // 선택된 첨부파일
+  
 
   useEffect(() => {
     // 로그인 상태 확인
