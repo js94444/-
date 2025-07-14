@@ -14,6 +14,7 @@ interface FormData {
   purpose: string
   companion: string
   privacyAgree: boolean
+  attachments: string[] // 파일명 배열 추가
 }
 
 export default function VisitorApply() {
@@ -27,9 +28,11 @@ export default function VisitorApply() {
     visitTime: '',
     purpose: '',
     companion: '',
-    privacyAgree: false
+    privacyAgree: false,
+    attachments: []
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -37,9 +40,13 @@ export default function VisitorApply() {
     // LocalStorage에서 기존 데이터 가져오기
     const existingData = JSON.parse(localStorage.getItem('visitorApplications') || '[]')
     
+    // 파일명 배열 저장
+    const attachmentNames = selectedFiles ? Array.from(selectedFiles).map(f => f.name) : []
+
     // 새로운 신청 추가
     const newApplication = {
       ...formData,
+      attachments: attachmentNames,
       id: Date.now(),
       status: '대기중',
       submitDate: new Date().toISOString()
@@ -64,6 +71,11 @@ export default function VisitorApply() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+  }
+
+  // 파일 첨부 핸들러
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSelectedFiles(e.target.files)
   }
 
   if (isSubmitted) {
@@ -169,7 +181,7 @@ export default function VisitorApply() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="visitDate" className="block text-sm font-medium text-gray-700">
-                    방문 일자 *
+                    방문 예정일자 *
                   </label>
                   <input
                     type="date"
@@ -184,7 +196,7 @@ export default function VisitorApply() {
 
                 <div>
                   <label htmlFor="visitTime" className="block text-sm font-medium text-gray-700">
-                    방문 시간 *
+                    방문 예정시간 *
                   </label>
                   <input
                     type="time"
@@ -227,6 +239,28 @@ export default function VisitorApply() {
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="동반자가 있는 경우 이름과 소속을 입력해주세요"
                 />
+              </div>
+
+              {/* 파일 첨부 */}
+              <div className="mt-4">
+                <label htmlFor="attachment" className="block text-sm font-medium text-gray-700">
+                  파일 첨부 (여러 개 선택 가능)
+                </label>
+                <input
+                  type="file"
+                  name="attachment"
+                  id="attachment"
+                  multiple
+                  onChange={handleFileChange}
+                  className="mt-1 block w-full"
+                />
+                {selectedFiles && selectedFiles.length > 0 && (
+                  <ul className="text-xs text-gray-500 mt-1 list-disc list-inside">
+                    {Array.from(selectedFiles).map((file, idx) => (
+                      <li key={idx}>{file.name}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
 
